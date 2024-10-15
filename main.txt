@@ -1,0 +1,129 @@
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import joblib
+import os
+
+app = FastAPI()
+
+# Función para entrenar el modelo
+def train_model(csv_file: str):
+    df = pd.read_csv(csv_file)
+    
+    # Variables independientes y dependientes
+    X = df[['area', 'bedrooms', 'bathrooms', 'stories', 'mainroad', 
+            'guestroom', 'basement', 'hotwaterheating', 'airconditioning', 
+            'parking', 'prefarea', 'furnishingstatus']]  # Características
+    y = df['price']  # Variable dependiente (precio)
+    
+    # Convertir variables categóricas a dummies
+    X = pd.get_dummies(X, drop_first=True)
+    
+    # Dividir los datos en entrenamiento y prueba
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Entrenar el modelo de regresión lineal
+    reg = LinearRegression()
+    reg.fit(X_train, y_train)
+    
+    # Evaluar el modelo
+    y_pred = reg.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    
+    # Guardar el modelo entrenado
+    joblib.dump(reg, 'model.pkl')
+    
+    return mse
+
+# Entrenar el modelo al iniciar la aplicación (asegúrate de que el archivo CSV esté disponible)
+if not os.path.exists('model.pkl'):
+    train_model('Housing.csv')
+
+# Cargar el modelo entrenado
+model = joblib.load('model.pkl')
+
+@app.get("/", response_class=HTMLResponse)
+async def read_form():
+    return """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Predicción de Precio de Casa</title>
+    </head>
+    <body>
+        <h1>Ingrese los detalles de la casa</h1>
+        <form action="/predict/" method="post">
+            <label for="area">Área (m²):</label>
+            <input type="text" name="area" required><br><br>
+            
+            <label for="bedrooms">Habitaciones:</label>
+            <input type="number" name="bedrooms" required><br><br>
+            
+            <label for="bathrooms">Baños:</label>
+            <input type="number" name="bathrooms" required><br><br>
+            
+            <label for="stories">Pisos:</label>
+            <input type="number" name="stories" required><br><br>
+            
+            <label for="mainroad">Cerca de carretera principal (sí/no):</label>
+            <input type="text" name="mainroad" required><br><br>
+            
+            <label for="guestroom">Habitación de invitados (sí/no):</label>
+            <input type="text" name="guestroom" required><br><br>
+            
+            <label for="basement">Sótano (sí/no):</label>
+            <input type="text" name="basement" required><br><br>
+            
+            <label for="hotwaterheating">Calefacción de agua caliente (sí/no):</label>
+            <input type="text" name="hotwaterheating" required><br><br>
+            
+            <label for="airconditioning">Aire acondicionado (sí/no):</label>
+            <input type="text" name="airconditioning" required><br><br>
+            
+            <label for="parking">Espacios de estacionamiento:</label>
+            <input type="number" name="parking" required><br><br>
+            
+            <label for="prefarea">Cerca de área preferida (sí/no):</label>
+            <input type="text" name="prefarea" required><br><br>
+            
+            <label for="furnishingstatus">Estado de amueblado:</label>
+            <input type="text" name="furnishingstatus" required><br><br>
+
+            <input type="submit" value="Predecir Precio">
+        </form>
+    </body>
+    </html>
+    """
+
+@app.post("/predict/")
+async def predict(area: float = Form(...), bedrooms: int = Form(...), bathrooms: int = Form(...), 
+                    stories: int = Form(...), mainroad: str = Form(...), guestroom: str = Form(...), 
+                    basement: str = Form(...), hotwaterheating: str = Form(...), 
+                    airconditioning: str = Form(...), parking: int = Form(...), 
+                    prefarea: str = Form(...), furnishingstatus: str = Form(...)):
+    
+    # Crear un DataFrame con los datos ingresados
+    input_data = pd.DataFrame([[area, bedrooms, bathrooms, stories, mainroad, guestroom, basement, 
+                                hotwaterheating, airconditioning, parking, prefarea, furnishingstatus]],
+                                columns=['area', 'bedrooms', 'bathrooms', 'stories', 'mainroad', 
+                                        'guestroom', 'basement', 'hotwaterheating', 
+                                        'airconditioning', 'parking', 'prefarea', 
+                                        'furnishingstatus'])
+    
+    # Convertir variables categóricas a dummies
+    input_data = pd.get_dummies(input_data, drop_first=True)
+    
+    # Asegurarse de que las columnas coinciden con las del modelo
+    for col in model.feature_names_in_:
+        if col not in input_data.columns:
+            input_data[col] = 0  # Rellenar columnas faltantes con ceros
+    
+    # Predecir el precio
+    prediction = model.predict(input_data)
+    
+    return {"prediction": prediction[0]}

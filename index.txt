@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicción de Precio de Casa</title>
+</head>
+<body>
+    <h1>Ingrese los detalles de la casa</h1>
+    <form action="http://localhost:8000/predict/" method="post">
+        <label for="area">Área (m²):</label>
+        <input type="text" name="area" required><br><br>
+        
+        <label for="bedrooms">Habitaciones:</label>
+        <input type="number" name="bedrooms" required><br><br>
+        
+        <label for="bathrooms">Baños:</label>
+        <input type="number" name="bathrooms" required><br><br>
+        
+        <label for="stories">Pisos:</label>
+        <input type="number" name="stories" required><br><br>
+        
+        <label for="mainroad">Cerca de carretera principal (sí/no):</label>
+        <input type="text" name="mainroad" required><br><br>
+        
+        <label for="guestroom">Habitación de invitados (sí/no):</label>
+        <input type="text" name="guestroom" required><br><br>
+        
+        <label for="basement">Sótano (sí/no):</label>
+        <input type="text" name="basement" required><br><br>
+        
+        <label for="hotwaterheating">Calefacción de agua caliente (sí/no):</label>
+        <input type="text" name="hotwaterheating" required><br><br>
+        
+        <label for="airconditioning">Aire acondicionado (sí/no):</label>
+        <input type="text" name="airconditioning" required><br><br>
+        
+        <label for="parking">Espacios de estacionamiento:</label>
+        <input type="number" name="parking" required><br><br>
+        
+        <label for="prefarea">Cerca de área preferida (sí/no):</label>
+        <input type="text" name="prefarea" required><br><br>
+        
+        <label for="furnishingstatus">Estado de amueblado:</label>
+        <input type="text" name="furnishingstatus" required><br><br>
+
+        <input type="submit" value="Predecir Precio">
+    </form>
+</body>
+</html>
