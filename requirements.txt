@@ -1,0 +1,9 @@
+Instalaciones necesarias para correr este modelo:
+fastapi
+uvicorn
+pandas
+scikit-learn
+joblib
+
+Se puede instalar en la terminal usando:
+pip install -r requirements.txt
